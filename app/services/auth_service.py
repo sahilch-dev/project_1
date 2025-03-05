@@ -11,7 +11,7 @@ class AuthService:
     @staticmethod
     def register_user(name, email, password):
         hashed_password = generate_password_hash(password)
-        user = User(full_name=name, email=email, password=hashed_password)
+        user = db.User(full_name=name, email=email, password=hashed_password)
         try:
             db.session.add(user)
             db.session.commit()
