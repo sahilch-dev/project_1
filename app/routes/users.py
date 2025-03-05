@@ -10,7 +10,10 @@ def create_user():
 
 @users_bp.route('/', methods=['GET'])
 def get_all_users():
-    response, status = UserService.get_all_users()
+    page = request.args.get('page', default=1, type=int)
+    per_page = request.args.get('per_page', default=10, type=int)
+
+    response, status = UserService.get_all_users(page, per_page)
     return make_response(response, status)
 
 @users_bp.route('/<int:user_id>', methods=['GET'])

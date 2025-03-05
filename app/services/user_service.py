@@ -4,6 +4,7 @@ from sqlalchemy.exc import IntegrityError
 
 class UserService:
 
+
     @staticmethod
     def create_user(name: str, email: str, password: str):
         try:
@@ -14,10 +15,16 @@ class UserService:
         except IntegrityError:
             return {'message': 'Email already registered'}, 400
 
+
     @staticmethod
-    def get_all_users():
-        users = User.query.all()
-        return {'users': [user.to_dict() for user in users]}, 200
+    def get_all_users(page: int, per_page: int):
+        users = User.query.paginate(page=page, per_page=per_page, error_out=False)
+        return {
+            'users': [user.to_dict() for user in users.items],
+            'total': users.total,
+            'pages': users.pages
+        }, 200
+
 
     @staticmethod
     def get_user(user_id: int):
