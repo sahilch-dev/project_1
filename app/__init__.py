@@ -9,12 +9,9 @@ def create_app() -> Flask:
 
     # Load configuration from config.py
     app.config.from_object('app.config.Config')
-
-    # Initialize extensions
     db.init_app(app)
 
-    # Import and register Blueprints
     from app.routes import users_bp
-    app.register_blueprint(users_bp, url_prefix='/users')
+    app.register_blueprint(users_bp, url_prefix='/api/v1/users')
 
     return app
