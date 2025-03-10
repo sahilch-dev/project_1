@@ -11,7 +11,8 @@ def create_app() -> Flask:
     app.config.from_object('app.config.Config')
     db.init_app(app)
 
-    from app.routes import users_bp
+    from app.routes import users_bp, categories_bp, wishlist_bp
     app.register_blueprint(users_bp, url_prefix='/api/v1/users')
+    app.register_blueprint(categories_bp, url_prefix='/api/v1/categories')
 
     return app
