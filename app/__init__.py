@@ -17,7 +17,7 @@ def create_app() -> Flask:
     app.register_blueprint(users_bp, url_prefix='/api/v1/users')
     app.register_blueprint(categories_bp, url_prefix='/api/v1/categories')
 
-    with app.app_context():
-        db.drop_all()
-        db.create_all()
+    # with app.app_context():
+    #     db.drop_all()
+    #     db.create_all()
     return app
