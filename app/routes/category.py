@@ -1,6 +1,6 @@
 from flask import request, jsonify
 from . import categories_bp
-from app.services.category_service import CategoryService
+from app.services import CategoryService
 from app.utils.validator import CategorySchema
 
 category_schema = CategorySchema()
@@ -21,15 +21,17 @@ def create_category():
     errors = category_schema.validate(data)
     if errors:
         return jsonify(errors), 400
-
     return CategoryService.create_category(data)
 
 @categories_bp.put('/<int:category_id>')
 def update_category(category_id):
     data = request.json
-
     errors = category_schema.validate(data, partial=True)  # Allow partial updates
     if errors:
         return jsonify(errors), 400
 
     return CategoryService.update_category(category_id, data)
+
+@categories_bp.delete('/<int:category_id>')
+def delete_category(category_id: int):
+    return CategoryService.delete_category(category_id)

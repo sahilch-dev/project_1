@@ -1,5 +1,5 @@
 from flask import request, make_response
-from app.services.user_service import UserService
+from app.services import UserService
 from . import users_bp
 
 @users_bp.post('')

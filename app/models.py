@@ -14,7 +14,7 @@ from app import db
 class Product(db.Model):
     __tablename__ = 'products'
     id: Mapped[int] = Column(Integer, primary_key=True)
-    name: Mapped[str] = Column(String, nullable=False)
+    name: Mapped[str] = Column(String, unique=True, nullable=False)
     description: Mapped[str] = Column(String, nullable=True)
     price: Mapped[float] = Column(Float, nullable=False)
     stock: Mapped[int] = Column(Integer, nullable=False, default=0)
@@ -40,6 +40,13 @@ class Category(db.Model):
     __tablename__ = 'categories'
     id: Mapped[int] = Column(Integer, primary_key=True)
     name: Mapped[str] = Column(String, unique=True, nullable=False)
+    parent_id: Mapped[int] = Column(
+        Integer,
+        ForeignKey('categories.id'),
+        nullable=True,
+    )
+    parent = relationship('Category', remote_side=[id], backref='subcategories')
+
     created_at: Mapped[str] = Column(String, default=func.current_timestamp())
     updated_at: Mapped[str] = Column(String, default=func.current_timestamp(), onupdate=func.current_timestamp())
 
@@ -50,6 +57,7 @@ class Category(db.Model):
         return {
             'id': self.id,
             'name': self.name,
+            'parrent': self.parent_id,
             'created_at': self.created_at,
             'updated_at': self.updated_at
         }

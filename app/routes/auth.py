@@ -1,5 +1,5 @@
 from flask import request, make_response
-from app.services.auth_service import AuthService
+from app.services import AuthService
 from app.utils.validator import LoginSchema, UserSchema
 from . import users_bp
 
