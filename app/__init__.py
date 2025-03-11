@@ -1,6 +1,7 @@
 import os
 from flask import Flask
 from flask_sqlalchemy import SQLAlchemy
+from sqlalchemy.log import echo_property
 
 db = SQLAlchemy()
 
@@ -17,7 +18,7 @@ def create_app() -> Flask:
     app.register_blueprint(users_bp, url_prefix='/api/v1/users')
     app.register_blueprint(categories_bp, url_prefix='/api/v1/categories')
 
-    # with app.app_context():
+    with app.app_context():
     #     db.drop_all()
-    #     db.create_all()
+        db.create_all()
     return app
