@@ -154,8 +154,12 @@ class UserService:
 class ProductService:
 
     @staticmethod
-    def get_all_products():
-        products = Product.query.all()
+    def get_all_products(product_name):
+        products = []
+        if not product_name:
+            products = Product.query.all()
+        else:
+            products = Product.query.filter(Product.name.ilike(f'%{product_name}%')).all()
         return [product.to_dict() for product in products], 200
 
     @staticmethod
