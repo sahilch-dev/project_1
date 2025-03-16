@@ -100,6 +100,19 @@ class AuthService:
         return {'message': 'Invalid credentials'}, 401
 
     @staticmethod
+    def admin_auth(email, password):
+        user = Admin.query.filter_by(email=email).first()
+        if user and user.password == password:
+            token = jwt.encode(
+                {'id': user.id, 'user': "admin", 'exp': datetime.now(timezone.utc) + timedelta(hours=1)},
+                current_app.config['JWT_SECRET_KEY'],
+                algorithm="HS256"
+            )
+            return {'token': token}, 200
+        return {'message': 'Invalid credentials'}, 401
+
+
+    @staticmethod
     def token_required(f):
         @wraps(f)
         def decorated(*args, **kwargs):
@@ -183,12 +196,16 @@ class AdminService:
         return {'message': 'User not found'}, 404
 
     @staticmethod
-    def disable_user(user_id):
-        pass
+    def update_user(user_id, data):
+        admin = Admin.query.get(user_id)
+        if not admin:
+            return {'error': 'Admin not found'}, 404
 
-    @staticmethod
-    def enable_user(user_id):
-        pass
+        for field in ['full_name', 'email', 'password', 'active']:
+            if field in data:
+                setattr(admin, field, data[field])
+        db.session.commit()
+        return admin.to_dict(), 200
 
 
 class ProductService:

@@ -22,3 +22,9 @@ def get_all_users():
 def get_user(user_id: int):
     response, status = AdminService.get_user(user_id)
     return make_response(response, status)
+
+@admin_bp.put('/<int:user_id>')
+def update_user(user_id: int):
+    data = request.get_json()
+    response, status = AdminService.update_user(user_id, data.get('name'), data.get('email'))
+    return make_response(response, status)
