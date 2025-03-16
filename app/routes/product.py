@@ -7,8 +7,12 @@ from app.routes import products_bp
 @products_bp.route('', methods=['GET'])
 def get_all_products():
     product_name = request.args.get('product_name', None)
-
-    response, status = ProductService.get_all_products(product_name)
+    category_name = request.args.get('category_name', None)
+    response, status = {}, 200
+    if product_name is not None:
+        response, status = ProductService.get_all_products(product_name)
+    elif category_name is not None:
+        response, status = ProductService.get_product_by_category(category_name)
     return make_response(response, status)
 
 @products_bp.route('/<int:product_id>', methods=['GET'])

@@ -24,6 +24,10 @@ class CategoryService:
             return {'error': 'Category not found'}, 200
         return category.to_dict(), 200
 
+    @staticmethod
+    def get_category_by_name(category_name):
+        categories = Category.query.filter(Category.name.ilike(f'%{category_name}%')).all()
+        return [category.to_dict() for category in categories], 200
 
     @staticmethod
     def create_category(data):
@@ -192,10 +196,19 @@ class ProductService:
     @staticmethod
     def get_all_products(product_name):
         products = []
-        if not product_name:
-            products = Product.query.all()
-        else:
-            products = Product.query.filter(Product.name.ilike(f'%{product_name}%')).all()
+        products = Product.query.all()
+        return [product.to_dict() for product in products], 200
+
+    @staticmethod
+    def get_product_by_name(product_name):
+        products = Product.query.filter(Product.name.ilike(f'%{product_name}%')).all()
+        return [product.to_dict() for product in products], 200
+
+    @staticmethod
+    def get_product_by_category(category_name):
+        response, status = CategoryService.get_category_by_name(category_name)
+        category_id = response[0].id
+        products = Product.query.filter(Product.category_id == category_id).all()
         return [product.to_dict() for product in products], 200
 
     @staticmethod
