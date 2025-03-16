@@ -84,6 +84,27 @@ class User(db.Model):
             'updated_at': self.updated_at
         }
 
+class Admin(db.Model):
+    __tablename__ = 'admin'
+    id: Mapped[int] = Column(Integer, primary_key=True)
+    full_name: Mapped[str] = Column(String)
+    email: Mapped[str] = Column(String, unique=True)
+    password: Mapped[str] = Column(String)
+    created_at: Mapped[str] = Column(String, default=func.current_timestamp())
+    updated_at: Mapped[str] = Column(String, default=func.current_timestamp(), onupdate=func.current_timestamp())
+
+    def __repr__(self):
+        return f'<User(id={self.id}, email="{self.email}")>'
+
+    def to_dict(self):
+        return {
+            'id': self.id,
+            'full_name': self.full_name,
+            'email': self.email,
+            'created_at': self.created_at,
+            'updated_at': self.updated_at
+        }
+
 
 class UserAddress(db.Model):
     __tablename__ = 'user_addresses'
