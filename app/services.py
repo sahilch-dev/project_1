@@ -1,13 +1,16 @@
 from datetime import datetime, timedelta, timezone
 from functools import wraps
-from flask import current_app, request, jsonify, g
-from werkzeug.security import generate_password_hash, check_password_hash
-from sqlalchemy.exc import IntegrityError
-import jwt
 
-from app.models import ( Product, Category, Cart, User, UserAddress, Admin, )
+import jwt
+from flask import current_app, request, jsonify, g
+from sqlalchemy.exc import IntegrityError
+from sqlalchemy.exc import SQLAlchemyError
+from werkzeug.security import generate_password_hash, check_password_hash
+
 from app import db
+from app.models import (Product, Category, Cart, User, UserAddress, Admin, Order, OrderItem, PaymentTransaction)
 from app.utils.logger import logger
+
 
 class CategoryService:
 
@@ -327,3 +330,144 @@ class AddressService:
     def get_user_addresses(user_id):
         addresses = UserAddress.query.filter_by(user_id=user_id).all()
         return [address.to_dict() for address in addresses], 200
+
+
+class PaymentTransactionService:
+
+    @staticmethod
+    def create_transaction(transaction_id: str, amount: float, status: str, payment_method: str,
+                           order_id: int) -> PaymentTransaction:
+        try:
+            transaction = PaymentTransaction(
+                transaction_id=transaction_id,
+                amount=amount,
+                status=status,
+                payment_method=payment_method,
+                order_id=order_id
+            )
+            db.session.add(transaction)
+            db.session.commit()
+            return transaction
+        except SQLAlchemyError as e:
+            db.session.rollback()
+            raise Exception(f"Error creating payment transaction: {e}")
+
+    @staticmethod
+    def update_transaction(transaction_id: str, amount: float = None, status: str = None,
+                           payment_method: str = None) -> PaymentTransaction:
+        try:
+            transaction = PaymentTransaction.query.filter_by(transaction_id=transaction_id).first()
+            if not transaction:
+                raise Exception(f"Transaction with ID '{transaction_id}' not found.")
+
+            if amount is not None:
+                transaction.amount = amount
+            if status is not None:
+                transaction.status = status
+            if payment_method is not None:
+                transaction.payment_method = payment_method
+
+            db.session.commit()
+            return transaction
+        except SQLAlchemyError as e:
+            db.session.rollback()
+            raise Exception(f"Error updating payment transaction: {e}")
+
+
+class OrderService:
+
+    @staticmethod
+    def create_order(user_id: int, user_address: int, status: str = "pending",
+                     payment_transaction_id: int = None) -> Order:
+        """
+        Create a new order using the user's cart items, calculate total amount, and remove items from the cart.
+
+        :param user_id: ID of the user placing the order.
+        :param user_address: ID of the user's address.
+        :param status: Initial status of the order.
+        :param payment_transaction_id: Optional payment transaction ID.
+        :return: Created Order instance.
+        """
+        try:
+            # Fetch all cart items for the user
+            cart_items = Cart.query.filter_by(user_id=user_id).all()
+            if not cart_items:
+                return {"message": "cart is empty"}, 200
+
+            # Calculate total amount
+            total_amount = sum(item.quantity * item.product.price for item in cart_items)
+
+            # Create the order
+            order = Order(
+                user_id=user_id,
+                user_address=user_address,
+                total_amount=total_amount,
+                status=status,
+                payment_transaction_id=payment_transaction_id
+            )
+            db.session.add(order)
+            db.session.flush()  # To get the order.id before committing
+
+            # Add each cart item to the order and remove it from the cart
+            for cart_item in cart_items:
+                order_item = OrderItem(
+                    order_id=order.id,
+                    product_id=cart_item.product_id,
+                    quantity=cart_item.quantity,
+                    price=cart_item.product.price,
+                    subtotal=cart_item.quantity * cart_item.product.price
+                )
+                db.session.add(order_item)
+                db.session.delete(cart_item)
+
+            db.session.commit()
+            return order
+        except SQLAlchemyError as e:
+            db.session.rollback()
+            raise Exception(f"Error creating order: {e}")
+
+    @staticmethod
+    def update_order(order_id: int, status: str = None, user_address: int = None, payment_transaction_id: int = None) -> Order:
+        """
+        Update an existing order's status, address, or payment transaction.
+
+        :param order_id: ID of the order to update.
+        :param status: New status of the order.
+        :param user_address: New user address ID.
+        :param payment_transaction_id: New payment transaction ID.
+        :return: Updated Order instance.
+        """
+        try:
+            order = Order.query.get(order_id)
+            if not order:
+                raise Exception(f"Order with ID '{order_id}' not found.")
+
+            if status:
+                order.status = status
+            if user_address:
+                order.user_address = user_address
+            if payment_transaction_id:
+                order.payment_transaction_id = payment_transaction_id
+
+            db.session.commit()
+            return order
+        except SQLAlchemyError as e:
+            db.session.rollback()
+            raise Exception(f"Error updating order: {e}")
+
+    @staticmethod
+    def get_order_by_id(order_id: int) -> Order:
+        """
+        Retrieve an order by its ID.
+        """
+        order = Order.query.get(order_id)
+        if not order:
+            raise Exception(f"Order with ID '{order_id}' not found.")
+        return order
+
+    @staticmethod
+    def get_orders_by_user(user_id: int) -> list:
+        """
+        Retrieve all orders for a specific user.
+        """
+        return Order.query.filter_by(user_id=user_id).all()

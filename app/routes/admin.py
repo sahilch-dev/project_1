@@ -1,5 +1,6 @@
 from flask import request, make_response
-from app.services import AdminService
+from app.services import AdminService, AuthService
+from app.utils.validator import LoginSchema
 from . import admin_bp
 
 
@@ -27,4 +28,14 @@ def get_user(user_id: int):
 def update_user(user_id: int):
     data = request.get_json()
     response, status = AdminService.update_user(user_id, data.get('name'), data.get('email'))
+    return make_response(response, status)
+
+@admin_bp.route('/login', methods=['POST'])
+def login():
+    data = request.get_json()
+    errors = LoginSchema().validate(data)
+    if errors:
+        return make_response({"errors": errors}, 400)
+
+    response, status = AuthService.admin_auth(data["email"], data["password"])
     return make_response(response, status)

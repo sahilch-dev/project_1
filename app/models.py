@@ -91,7 +91,7 @@ class Admin(db.Model):
     full_name: Mapped[str] = Column(String)
     email: Mapped[str] = Column(String, unique=True)
     password: Mapped[str] = Column(String)
-    active: Mapped[bool] = Column(Boolean, defalt=True)
+    active: Mapped[bool] = Column(Boolean, default=True)
     created_at: Mapped[str] = Column(String, default=func.current_timestamp())
     updated_at: Mapped[str] = Column(String, default=func.current_timestamp(), onupdate=func.current_timestamp())
 
@@ -160,18 +160,28 @@ class PaymentTransaction(db.Model):
     __tablename__ = 'payment_transactions'
     id: Mapped[int] = Column(Integer, primary_key=True)
     transaction_id: Mapped[str] = Column(String, unique=True, nullable=False)
+    order_id: Mapped[int] = Column(Integer, ForeignKey('orders.id'), nullable=False)
     amount: Mapped[float] = Column(Float, nullable=False)
     status: Mapped[str] = Column(String, nullable=False)
+    payment_method: Mapped[str] = Column(String, nullable=False)
+    created_at: Mapped[str] = Column(String, default=func.current_timestamp())
+    updated_at: Mapped[str] = Column(String, default=func.current_timestamp(), onupdate=func.current_timestamp())
+
+    order = relationship('Order', backref='payment_transactions')
 
     def __repr__(self):
-        return f'<PaymentTransaction(id={self.id}, transaction_id="{self.transaction_id}", amount={self.amount})>'
+        return f'<PaymentTransaction(id={self.id}, transaction_id="{self.transaction_id}", amount={self.amount}, status="{self.status}")>'
 
     def to_dict(self):
         return {
             'id': self.id,
             'transaction_id': self.transaction_id,
+            'order_id': self.order_id,
             'amount': self.amount,
-            'status': self.status
+            'status': self.status,
+            'payment_method': self.payment_method,
+            'created_at': self.created_at,
+            'updated_at': self.updated_at
         }
 
 
@@ -179,8 +189,16 @@ class Order(db.Model):
     __tablename__ = 'orders'
     id: Mapped[int] = Column(Integer, primary_key=True)
     user_id: Mapped[int] = Column(Integer, ForeignKey('users.id'), nullable=False)
+    user_address: Mapped[int] = Column(Integer, ForeignKey('user_addresses.id'), nullable=False)
     total_amount: Mapped[float] = Column(Float, nullable=False)
     status: Mapped[str] = Column(String, nullable=False)
+    payment_transaction_id: Mapped[int] = Column(Integer, ForeignKey('payment_transactions.id'), nullable=True)
+    created_at: Mapped[str] = Column(String, default=func.current_timestamp())
+    updated_at: Mapped[str] = Column(String, default=func.current_timestamp(), onupdate=func.current_timestamp())
+
+    user = relationship('User', backref='orders')
+    payment_transaction = relationship('PaymentTransaction', backref='order', uselist=False)
+    items = relationship('OrderItem', backref='order', cascade='all, delete-orphan')
 
     def __repr__(self):
         return f'<Order(id={self.id}, user_id={self.user_id}, status="{self.status}")>'
@@ -190,5 +208,33 @@ class Order(db.Model):
             'id': self.id,
             'user_id': self.user_id,
             'total_amount': self.total_amount,
-            'status': self.status
+            'status': self.status,
+            'payment_transaction_id': self.payment_transaction_id,
+            'created_at': self.created_at,
+            'updated_at': self.updated_at,
+            'items': [item.to_dict() for item in self.items]
+        }
+
+class OrderItem(db.Model):
+    __tablename__ = 'order_items'
+    id: Mapped[int] = Column(Integer, primary_key=True)
+    order_id: Mapped[int] = Column(Integer, ForeignKey('orders.id'), nullable=False)
+    product_id: Mapped[int] = Column(Integer, ForeignKey('products.id'), nullable=False)
+    quantity: Mapped[int] = Column(Integer, nullable=False)
+    price: Mapped[float] = Column(Float, nullable=False)
+    subtotal: Mapped[float] = Column(Float, nullable=False)
+
+    product = relationship('Product')
+
+    def __repr__(self):
+        return f'<OrderItem(id={self.id}, order_id={self.order_id}, product_id={self.product_id}, quantity={self.quantity})>'
+
+    def to_dict(self):
+        return {
+            'id': self.id,
+            'order_id': self.order_id,
+            'product_id': self.product_id,
+            'quantity': self.quantity,
+            'price': self.price,
+            'subtotal': self.subtotal
         }

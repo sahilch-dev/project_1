@@ -24,13 +24,3 @@ def login():
     return make_response(response, status)
 
 
-@users_bp.route('/admin/login', methods=['POST'])
-def login():
-    data = request.get_json()
-    errors = LoginSchema().validate(data)
-    if errors:
-        return make_response({"errors": errors}, 400)
-
-    response, status = AuthService.admin_auth(data["email"], data["password"])
-    return make_response(response, status)
-
