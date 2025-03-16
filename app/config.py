@@ -6,3 +6,4 @@ class Config:
     SECRET_KEY = os.environ.get("SECRET_KEY")
     JWT_SECRET_KEY = os.environ.get("JWT_SECRET_KEY")
     LOG_FILE = "app.log"
+    UPLOAD_FOLDER = os.path.join(os.getcwd(), "upload")
