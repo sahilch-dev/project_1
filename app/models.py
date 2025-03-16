@@ -4,6 +4,7 @@ from sqlalchemy import (
     Integer,
     Float,
     String,
+    Boolean,
     ForeignKey,
     func
 )
@@ -90,6 +91,7 @@ class Admin(db.Model):
     full_name: Mapped[str] = Column(String)
     email: Mapped[str] = Column(String, unique=True)
     password: Mapped[str] = Column(String)
+    active: Mapped[bool] = Column(Boolean, defalt=True)
     created_at: Mapped[str] = Column(String, default=func.current_timestamp())
     updated_at: Mapped[str] = Column(String, default=func.current_timestamp(), onupdate=func.current_timestamp())
 
