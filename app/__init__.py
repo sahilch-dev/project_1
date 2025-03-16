@@ -21,6 +21,6 @@ def create_app() -> Flask:
     app.register_blueprint(admin_bp, url_prefix='/api/v1/admin')
 
     with app.app_context():
-        db.drop_all()
+        # db.drop_all()
         db.create_all()
     return app
